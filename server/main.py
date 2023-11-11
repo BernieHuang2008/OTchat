@@ -4,7 +4,7 @@ import websockets
 async def handle_connection(websocket, path):
     addr = websocket.remote_address
     print("Client Connected {}".format(addr))
-    await websocket.send('{"from": "WELCOME", "avatar": "assets/img/server.jpg", "msg": "Hello Client"}')
+    await websocket.send('{"type": "message", "from": "WELCOME", "avatar": "assets/img/server.jpg", "msg": "Hello Client"}')
 
     # Loop to receive messages from the client
     async for message in websocket:
