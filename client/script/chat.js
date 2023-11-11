@@ -56,7 +56,7 @@ window.onload = function () {
     $('#send').onclick = function () {
         var message = $('#input').value;
         ws.send(message);
-        display_message({ type: 'message', from: 'Bernie Huang', msg: message });
+        display_message({ type: 'message', from: MY_INFO.username, msg: message });
         $('#input').value = '';
     };
 };
