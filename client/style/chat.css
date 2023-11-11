@@ -1,0 +1,80 @@
+body {
+    background-color: #f5f5f5;
+
+    --bubble-white: #fff;
+    --bubble-white-hover: #ebebeb;
+    --bubble-green: #95ec69;
+    --bubble-green-hover: #89d961;
+}
+
+#chat>.message {
+    height: 100%;
+    overflow-y: scroll;
+    padding: 0 10px;
+
+    width: 100%;
+    overflow: hidden;
+
+    --sender-margin: 10px;
+    --avatar-size: 2rem;
+    --avatar-margin: 10px;
+}
+
+#chat>.message>.sender {
+    display: flex;
+    height: 2rem;
+    flex-wrap: wrap;
+    align-items: top;
+    margin: var(--sender-margin);
+
+    user-select: none;
+}
+
+#chat>.message>.sender>img {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 3px;
+    margin-right: var(--avatar-margin);
+}
+
+#chat>.message>.sender>span {
+    color: #b2b2b2;
+    font-size: small;
+}
+
+#chat>.message>.msg {
+    --bg-color: var(--bubble-white);
+    --bg-hover: var(--bubble-white-hover);
+    --curr-bg-color: var(--bg-color);
+
+    display: block;
+    width: max-content;
+    position: relative;
+    left: calc(var(--sender-margin) + var(--avatar-margin) + var(--avatar-size));
+    top: -1rem;
+    padding: 7px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 3px;
+
+    background-color: var(--curr-bg-color);
+
+    &:hover {
+       --curr-bg-color: var(--bg-hover);
+    }
+}
+
+#chat>.message>.msg::before {
+    --triangle-size: 7px;
+
+    content: "";
+    position: absolute;
+    top: 0.5rem;
+    left: calc(-1 * var(--triangle-size));
+    width: 0;
+    height: 0;
+    border-top: var(--triangle-size) solid transparent;
+    border-bottom: var(--triangle-size) solid transparent;
+    border-right: var(--triangle-size) solid var(--curr-bg-color);
+}
+
