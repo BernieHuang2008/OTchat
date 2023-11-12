@@ -1,5 +1,5 @@
 """
-Use built-in sqlite3 library to operate sql in a more good way.
+Use built-in sqlite3 library to operate sql in a more pythonic way.
 """
 
 import sqlite3
@@ -22,9 +22,20 @@ class DataBase:
         self._gather_info()
 
     def __getitem__(self, key: str) -> Table:
+        """
+        get a table from the database.
+
+        Paras:
+            key: str
+                The name of the table.
+        """
         return self.tables[key]
 
     def _gather_info(self):
+        """
+        [Helper] Gather all infomations of the database, including:
+          - all tables
+        """
         def get_all_tables():
             self.cursor.execute(
                 "SELECT name FROM sqlite_master WHERE type='table';")
@@ -84,11 +95,32 @@ class Table:
         self._gather_info()
 
     def __getitem__(self, key: str) -> Exp:
+        """
+        get a column from the table, mainly used to construct query.
+        """
         if key not in self.columns:
             raise Exception("Column not exists.")
         return Exp(key)
+    
+    def __call__(self, exp: Exp, select: str='*') -> Any:
+        """
+        Select data from the table.
+        
+        Paras:
+            exp: Exp
+                The query expression.
+            select: str
+                The columns to select, default is '*'(all columns).
+        """
+        sql = f"SELECT {select} FROM {self.table_name} WHERE {str(exp)}"
+        self.db.do(sql)
+        return self.db.cursor.fetchall()
 
     def _gather_info(self):
+        """
+        [Helper] Gather all infomations of the table, including:
+            - all columns
+        """
         def get_columns():
             cursor = self.db.do(f"PRAGMA table_info({self.table_name})")
             return list(map(lambda x: x[1], cursor.fetchall()))
@@ -99,6 +131,17 @@ class Table:
             self.columns = []
 
     def newColumn(self, name, type, primaryKey=False):
+        """
+        Add a new column to the table.
+
+        Paras:
+            name: str
+                The name of the column.
+            type: str
+                The type of the column.
+            primaryKey: bool
+                The column will be a primary key if set to `True`.
+        """
         if name in self.columns:
             raise Exception("Column already exists.")
 
@@ -117,12 +160,32 @@ class Table:
         self.columns.append(name)
 
     def setPrimaryKey(self, keyname):
+        """
+        Set a column as the primary key of the table.
+
+        Paras:
+            keyname: str
+                The name of the column.
+        """
         self.db.do(
             f"CREATE TABLE new_table ({keyname} INTEGER PRIMARY KEY, {', '.join([f'{name} {type}' for name, type in self.columns.items() if name != keyname])})",
             f"INSERT INTO new_table SELECT * FROM {self.table_name}",
             f"DROP TABLE {self.table_name}",
             f"ALTER TABLE new_table RENAME TO {self.table_name}"
         )
+
+    def insert(self, **kwargs):
+        """
+        Insert a row into the table.
+
+        Paras:
+            kwargs: dict
+                The data to insert.
+        """
+        columns = ', '.join(kwargs.keys())
+        values = ', '.join(map(lambda x: f"'{x}'", kwargs.values()))
+
+        self.db.do(f"INSERT INTO {self.table_name} ({columns}) VALUES ({values})")
 
 
 class Exp:
@@ -157,7 +220,7 @@ class Exp:
     def between(self, __value1: Union[Exp, int, str], __value2: Union[Exp, int, str]) -> Exp:
         return Exp(self, 'BETWEEN', str(__value1) + ' AND ' + str(__value2))
     
-    def in_(self, __value1: Union[list, tuple, set]) -> Exp:
+    def in_(self, __value: Union[list, tuple, set]) -> Exp:
         return Exp(self, 'IN', str(tuple(__value)))
 
     def like(self, __value: str) -> Exp:
@@ -181,3 +244,6 @@ if __name__ == '__main__':
 
     print((db['test']['id'] == 1) & (db['test']['name']=='test'))
     print(db['test'].columns)
+
+    # db['test'].insert(id=1, name='b huang')
+    print(db['test'](db['test']['id'] == 1))
