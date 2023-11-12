@@ -59,22 +59,30 @@ class DataBase:
 
         return self.cursor
 
-    def createTable(self, table_name: str) -> Table:
+    def createTable(self, *table_names: str, forceNew: bool=False) -> Table:
         """
         create a table in the database.
 
         Paras:
-            table_name: str
+            table_names: str
                 The name of the table.
+            forceNew: bool
+                Force to create a new table.
+                An exception will be raised if the table already exists.
         """
-        if table_name in self.tables:
-            raise Exception("Table already exists.")
+        tables = []
 
-        table = Table(self, table_name)
-        # must be executed after Table.__init__()
-        self.tables[table_name] = table
+        for table_name in table_names:
+            if table_name in self.tables and forceNew:
+                raise Exception("Table already exists.")
 
-        return table
+            table = Table(self, table_name)
+            # must be executed after Table.__init__()
+            self.tables[table_name] = table
+
+            tables.append(table)
+
+        return tables if len(tables) > 1 else tables[0]
 
 
 class Table:
