@@ -1,0 +1,2 @@
+1 ................ chatroom not found
+2 ................ chatroom access denied
