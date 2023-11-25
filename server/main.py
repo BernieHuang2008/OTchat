@@ -67,8 +67,6 @@ class ChatApp:
             """
             tb = self.db_chat['users']
             res = tb.select(tb['username'] == username, 'username, password')
-            print("log71", tb.select(), len(res))
-
 
             # if user not found
             if len(res) == 0:
@@ -200,13 +198,14 @@ async def handle_connection(websocket, path):
                 USERID = status.id
 
                 res = status.result()
-                if message['authmethod'] == 'password' and message['AuthNeedToken']:
+                if message['authmethod'] == 'password' and 'AuthNeedToken' in message:
                     res['token'] = otchat.genToken(USERID, message['password'])
 
                 await websocket.send(json.dumps(res))
             else:
                 await websocket.send(json.dumps(status.result()))
             continue
+
         if message['type'] == 'checkauth':
             await websocket.send(json.dumps({
                 "type": "checkauth",
@@ -237,7 +236,7 @@ async def handle_connection(websocket, path):
 if __name__ == '__main__':
     otchat = ChatApp()
 
-    otchat.newUser('admin', hash('admin'.encode()).hexdigest())
+    # otchat.newUser('admin', hash('admin'.encode()).hexdigest())
 
     start_server = websockets.serve(handle_connection, 'localhost', 12345)
 
