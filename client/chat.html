@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Chat</title>
     <link rel="stylesheet" href="style/chat.css" />
 </head>
+
 <body>
     <div id="login">
         <input type="text" id="username" placeholder="Username" />
@@ -11,14 +13,17 @@
         <button id="login_btn">Login</button>
     </div>
 
-    <div id="chat"></div>
-    <br/>
-    <input type="text" id="input" autocomplete="off" />
-    <button id="send">Send</button>
+    <div id="ui">
+        <div id="chat"></div>
+        <br />
+        <input type="text" id="input" autocomplete="off" />
+        <button id="send">Send</button>
+    </div>
 
     <script src="script/sel.js"></script>
     <script src="script/chat.js"></script>
 </body>
+
 </html>
 
 <!-- Hard coded value for debug and test. -->

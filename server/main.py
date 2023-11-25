@@ -16,7 +16,6 @@ class ChatApp:
 
         print(" [*] Creating Table ...")
         self.db_chat.createTable("users", "tokens", "chats")
-        print(' ', self.db_chat['users'].columns)
 
         print(" [*] Initializing Table ...")
         self.db_chat['users'].struct({
@@ -68,6 +67,8 @@ class ChatApp:
             """
             tb = self.db_chat['users']
             res = tb.select(tb['username'] == username, 'username, password')
+            print("log71", tb.select(), len(res))
+
 
             # if user not found
             if len(res) == 0:
@@ -82,6 +83,7 @@ class ChatApp:
             # success
             self.code = 0
             self.id = res[0].username
+            print(self.id, "logged in")
 
         def auth_token(self, token, salt):
             """
@@ -117,7 +119,7 @@ class ChatApp:
         if msg['authmethod'] == 'password':
             a.auth_pwd(msg['username'], msg['password'], msg['salt'])
         elif msg['authmethod'] == 'token':
-            a.auth_token(msg['token'])
+            a.auth_token(msg['token'], msg['salt'])
 
         return a
 
@@ -134,7 +136,7 @@ class ChatApp:
         return False
 
     def random(self):
-        s = time.time()
+        s = str(time.time())
 
         for _ in range(random.randint(20, 40)):
             s += str(random.random())
@@ -147,10 +149,14 @@ class ChatApp:
         pwd = hash(f"{password}{self.random()}{username}".encode()).hexdigest()
 
         self.db_chat['tokens'].insert(
-            token=token, pwd=pwd, username=username, expire=int(time.time() + 30*24*60*60))
+            token=token,
+            pwd=pwd,
+            username=username,
+            expiry=int(time.time() + 30*24*60*60)
+        )
 
         return token + pwd
-    
+
     def newUser(self, username, password):
         self.db_chat['users'].insert(username=username, password=password)
 
@@ -194,13 +200,18 @@ async def handle_connection(websocket, path):
                 USERID = status.id
 
                 res = status.result()
-                if message['authmethod'] == 'password' and message['authneedtoken']:
+                if message['authmethod'] == 'password' and message['AuthNeedToken']:
                     res['token'] = otchat.genToken(USERID, message['password'])
 
                 await websocket.send(json.dumps(res))
             else:
                 await websocket.send(json.dumps(status.result()))
             continue
+        if message['type'] == 'checkauth':
+            await websocket.send(json.dumps({
+                "type": "checkauth",
+                "uid": USERID
+            }))
 
         if message['type'] == 'changeroom':
             # remove from queue
@@ -220,13 +231,13 @@ async def handle_connection(websocket, path):
 
             # send chat history
             CHATID = message['chatID']
-            await websocket.send(db_msg[CHATID].select())
+            await websocket.send(otchat.db_msg[CHATID].select())
 
 
 if __name__ == '__main__':
     otchat = ChatApp()
 
-    # otchat.newUser('admin', hash('admin'.encode()).hexdigest())
+    otchat.newUser('admin', hash('admin'.encode()).hexdigest())
 
     start_server = websockets.serve(handle_connection, 'localhost', 12345)
 
