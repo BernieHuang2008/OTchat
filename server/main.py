@@ -34,6 +34,7 @@ class ChatApp:
             "chatID": str,
             "users": str
         }, primaryKey="chatID")
+
         print(" [\u2713] Table Initialized")
 
         print(" [\u2713] Table Created")
@@ -70,11 +71,13 @@ class ChatApp:
 
             # if user not found
             if len(res) == 0:
+                print("log 74")
                 self.code = 1
                 return
 
             # if password is wrong
             if hash(f"{res[0].password}{salt}".encode()).hexdigest() != password:
+                print("log 80")
                 self.code = 1
                 return
 
@@ -93,6 +96,7 @@ class ChatApp:
 
             # if token not found
             if len(res) == 0:
+                print("log 99")
                 self.code = 1
                 return
 
@@ -104,6 +108,7 @@ class ChatApp:
 
             # if password is wrong
             if hash(f"{res[0].pwd}{salt}".encode()).hexdigest() != pwd:
+                print("log 110")
                 self.code = 1
                 return
 
@@ -154,9 +159,16 @@ class ChatApp:
         )
 
         return token + pwd
+    
+    """ High Level APIs """
 
     def newUser(self, username, password):
         self.db_chat['users'].insert(username=username, password=password)
+
+    def giveAccess(self, chatID, userID):
+        tb = self.db_chat['chats']
+        tb.insert(chatID=chatID, users=userID, __auto=True)
+        
 
 
 queue = {
@@ -232,11 +244,36 @@ async def handle_connection(websocket, path):
             CHATID = message['chatID']
             await websocket.send(otchat.db_msg[CHATID].select())
 
+        if message['type'] == 'message':
+            if CHATID is None:
+                await websocket.send('{"type": "error", "code": 3, "msg": "Not in a chat"}')
+                continue
+
+            if not otchat.checkAccess(CHATID, USERID):
+                await websocket.send('{"type": "error", "code": 2, "msg": "Access denied"}')
+                continue
+
+            otchat.db_msg[CHATID].insert(
+                type='message',
+                from_=USERID,
+                avatar=message['avatar'],
+                msg=message['msg']
+            )
+
+            for processor in queue[CHATID]:
+                await processor.send(json.dumps({
+                    "type": "message",
+                    "from": USERID,
+                    "avatar": message['avatar'],
+                    "msg": message['msg']
+                }))
+
 
 if __name__ == '__main__':
     otchat = ChatApp()
 
-    # otchat.newUser('admin', hash('admin'.encode()).hexdigest())
+    # otchat.newUser('test', hash('test'.encode()).hexdigest())
+    # otchat.giveAccess('chat1', 'test')  # chatID, userID
 
     start_server = websockets.serve(handle_connection, 'localhost', 12345)
 

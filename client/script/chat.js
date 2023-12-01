@@ -1,14 +1,17 @@
 function display_message(data) {
     switch (data.type) {
         case 'message':
-            message();
+            m_message();
             break;
         case 'info':
-            info();
+            m_info();
+            break;
+        case 'alert':
+            m_alert();
             break;
     }
 
-    function message() {
+    function m_message() {
         var msgbox = document.createElement('div');
         msgbox.classList.add('message');
 
@@ -39,9 +42,21 @@ function display_message(data) {
         $('#chat').appendChild(msgbox);
     }
 
-    function info() {
+    function m_info() {
         var msgbox = document.createElement('div');
         msgbox.classList.add('info');
+
+        var msg = document.createElement('div');
+        msg.classList.add('msg');
+        msg.innerText = data.msg;
+        msgbox.appendChild(msg);
+
+        $('#chat').appendChild(msgbox);
+    }
+
+    function m_alert() {
+        var msgbox = document.createElement('div');
+        msgbox.classList.add('info', 'alert');
 
         var msg = document.createElement('div');
         msg.classList.add('msg');
@@ -57,7 +72,7 @@ window.onload = function () {
     window.bkws = {};   // backup websocket functions
 
     ws.onopen = function () {
-        display_message({ type: 'info', msg: 'Connected to server' });
+        display_message({ type: 'info', msg: 'Connected' });
         auto_auth();
     };
 
@@ -67,7 +82,7 @@ window.onload = function () {
     };
 
     ws.onclose = function () {
-        display_message({ type: 'info', msg: 'Disconnected from the server' });
+        display_message({ type: 'alert', msg: '⚠ Disconnected' });
     };
 
     ws.wait1 = async function (func) {
@@ -83,8 +98,13 @@ window.onload = function () {
 
     $('#send').onclick = function () {
         var message = $('#input').value;
-        ws.send(message);
-        display_message({ type: 'message', from: ME.username, msg: message });
+        var data = {
+            type: 'message',
+            from: ME.username,
+            msg: message
+        };
+        ws.send(JSON.stringify(data));
+        display_message(data);
         $('#input').value = '';
     };
 
@@ -155,7 +175,7 @@ async function auth_token(token) {
     }
     ws.send(JSON.stringify(data));
 
-    var auth_result = {code: -1};   // default: waiting
+    var auth_result = { code: -1 };   // default: waiting
 
     await ws.wait1(function (e) {
         var data = JSON.parse(e.data);
@@ -191,7 +211,7 @@ async function auth_pwd(uname, pwd) {
                 auth_success(data);
                 set_cookie('otchat-login-token', data.token, 3600 * 24 * 30);
             } else {
-                display_message({ type: 'info',  msg: 'Authentication failed' });
+                display_message({ type: 'info', msg: 'Authentication failed' });
             }
         }
     })

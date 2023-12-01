@@ -69,49 +69,8 @@
 
 
 
-import sqlite3
 from MercurySQLite import DataBase
 import MercurySQLite as Mercury
-
-
-def query(self, table=None, select='*') -> list:
-    """
-    Execute query.
-    """
-    self.table = table or self.table
-
-    if self.table is None:
-        raise Exception("Table not specified.")
-    if not isinstance(self.table, Table):
-        raise Exception(f"Table `{self.table.table_name}` not exists.")
-
-    sql, paras = self.formula()
-    sql = f"SELECT {select} FROM {self.table.table_name} WHERE {sql}"
-
-    res = self.table.db.do(sql, paras=[paras])
-    return res.fetchall()
-
-def do(self, *sql: str, paras = []) -> sqlite3.Cursor:
-    """
-    Execute a sql command on the database.
-
-    Paras:
-        sql: str
-            The sql command(s).
-        paras: tuple
-            The parameters for the sql command(s).
-    """ 
-    if len(paras) < len(sql):
-        paras += [()] * (len(sql) - len(paras))
-
-    # for each sql command
-    for i in range(len(sql)):
-        self.cursor.execute(sql[i], paras[i])
-
-    self.conn.commit()
-
-    return self.cursor
-
 
 otchat = DataBase("otchat.db")
 
@@ -125,7 +84,7 @@ otchat.do("SELECT * FROM users WHERE 1 = ?;", paras=[(1,)])
 otchat.conn.commit()
 print(otchat.cursor.fetchall())
 
-res = do(otchat, "SELECT * FROM users WHERE 1 = ?;", paras=[(1,)])
+res = otchat.do("SELECT * FROM users WHERE 1 = ?;", paras=[(1,)])
 otchat.conn.commit()
 print(res.fetchall())
 

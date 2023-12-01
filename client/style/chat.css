@@ -72,7 +72,7 @@ body {
        --curr-bg-color: var(--bg-hover);
     }
     
-    user-select: all;
+    user-select: text;
 }
 
 #chat>.message>.msg::before {
@@ -81,7 +81,7 @@ body {
     content: "";
     position: absolute;
     top: 0.5rem;
-    left: calc(-1 * var(--triangle-size));
+    left: calc(-0.7 * var(--triangle-size));
     width: 0;
     height: 0;
     border-top: var(--triangle-size) solid transparent;
@@ -104,5 +104,9 @@ body {
     margin: 10px;
     padding: 2px;
     font-size: x-small;
+}
+
+#chat>.info.alert>.msg {
+    background-color: lightcoral;
 }
 
